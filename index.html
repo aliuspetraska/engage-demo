@@ -1,0 +1,56 @@
+<html>
+<body>
+<!--
+The html file is used when you are in development mode. The compiled extensions are automatically
+added to this file by Webpack when you are developing using npm run dev.
+-->
+<script>
+  window.watsonAssistantChatOptions = {
+      integrationID: "37414c5c-8d93-4252-a773-eaddeae6ae28",
+      region: "us-south",
+      serviceInstanceID: "8a8ea449-4fb6-453e-811a-bae320dc62b3",
+      history: [],
+      onLoad: function(instance) {
+
+        // https://web-chat.global.assistant.watson.cloud.ibm.com/docs.html?to=api-events
+
+        // store message as sent one
+        instance.on({ type: "send", handler: function(event) {
+          if (event.data.input.text !== "") {
+            window.watsonAssistantChatOptions.history.push({ type: "user", text: event.data.input.text });
+          }
+        }});
+
+        // store message as received one
+        instance.on({ type: "receive", handler: function(event) {
+          event.data.output.generic.forEach(function(message) {
+            window.watsonAssistantChatOptions.history.push({ type: "assistant", text: message.text });
+          });
+        }});
+
+        // retrieve from session history
+        instance.on({ type: "history:end", handler: function(event) {
+          event.messages.forEach(function(message) {
+            if (message.input) {
+              window.watsonAssistantChatOptions.history.push({ type: "user", text: message.input.text });
+            } else {
+              message.output.generic.forEach(function(message) {
+                window.watsonAssistantChatOptions.history.push({ type: "assistant", text: message.text });
+              });
+            }
+          });
+        }});
+
+        // Actually render the web chat.
+        instance.render();
+      },
+      serviceDeskFactory: window.WebChatServiceDeskFactory
+    };
+  setTimeout(function(){
+    const t=document.createElement('script');
+    t.src="https://web-chat.global.assistant.watson.appdomain.cloud/loadWatsonAssistantChat.js";
+    document.head.appendChild(t);
+  });
+</script>
+</body>
+</html>
